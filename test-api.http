@@ -1,0 +1,57 @@
+### Health Check
+GET http://localhost:5000/health
+
+### Signup - Register New User
+POST http://localhost:5000/api/auth/signup
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "phoneNumber": "+1234567890",
+  "password": "password123"
+}
+
+### Verify OTP (Use OTP from console)
+POST http://localhost:5000/api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "otp": "123456"
+}
+
+### Login
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Forgot Password
+POST http://localhost:5000/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### Reset Password (Use OTP from console)
+POST http://localhost:5000/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "otp": "123456",
+  "newPassword": "newpassword123"
+}
+
+### Resend OTP
+POST http://localhost:5000/api/auth/resend-otp
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
