@@ -4,6 +4,7 @@ export type QRType = 'whatsapp' | 'website';
 
 export interface IWhatsappData {
   name: string;
+  phone: string;
   message: string;
 }
 

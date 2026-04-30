@@ -20,6 +20,12 @@ export const createQRValidation = [
     .notEmpty()
     .withMessage('WhatsApp name is required when type is whatsapp'),
 
+  body('whatsappData.phone')
+    .if(body('type').equals('whatsapp'))
+    .trim()
+    .notEmpty()
+    .withMessage('WhatsApp phone number is required when type is whatsapp'),
+
   body('whatsappData.message')
     .if(body('type').equals('whatsapp'))
     .trim()

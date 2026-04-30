@@ -6,7 +6,10 @@ export class QRService {
     userId: string,
     name: string,
     type: QRType,
-    typeData: { whatsappData?: { name: string; message: string }; websiteData?: { url: string } }
+    typeData: {
+      whatsappData?: { name: string; phone: string; message: string };
+      websiteData?: { url: string };
+    }
   ): Promise<IQRResponse> {
     const qrPayload: any = { name, type, userId };
 
@@ -61,7 +64,7 @@ export class QRService {
     updates: {
       name?: string;
       type?: QRType;
-      whatsappData?: { name: string; message: string };
+      whatsappData?: { name: string; phone: string; message: string };
       websiteData?: { url: string };
     }
   ): Promise<IQRResponse> {
@@ -140,6 +143,31 @@ export class QRService {
       message: 'Scan recorded successfully',
       data: { qr: this.formatQR(qr) },
     };
+  }
+
+  // Resolves the redirect URL and increments scan count atomically
+  async resolveRedirectUrl(qrId: string): Promise<{ success: boolean; redirectUrl?: string; message?: string }> {
+    const qr = await QR.findByIdAndUpdate(
+      qrId,
+      { $inc: { scans: 1 } },
+      { new: true }
+    );
+
+    if (!qr) {
+      return { success: false, message: 'QR not found' };
+    }
+
+    let redirectUrl: string;
+
+    if (qr.type === 'website') {
+      redirectUrl = qr.websiteData!.url;
+    } else {
+      // Build WhatsApp deep link: https://wa.me/<phone>?text=<encodedMessage>
+      const encodedMessage = encodeURIComponent(qr.whatsappData!.message);
+      redirectUrl = `https://wa.me/${qr.whatsappData!.phone}?text=${encodedMessage}`;
+    }
+
+    return { success: true, redirectUrl };
   }
 
   private formatQR(qr: any): object {

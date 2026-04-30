@@ -121,4 +121,33 @@ export class QRController {
       next(error);
     }
   }
+
+  // Called when a physical QR code is scanned — increments scan count and redirects
+  async resolveRedirect(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid QR ID',
+        });
+        return;
+      }
+
+      const result = await qrService.resolveRedirectUrl(req.params.id);
+
+      if (!result.success || !result.redirectUrl) {
+        res.status(404).json({
+          success: false,
+          message: result.message || 'QR not found',
+        });
+        return;
+      }
+
+      // 302 redirect to the resolved URL
+      res.redirect(302, result.redirectUrl);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

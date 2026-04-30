@@ -25,6 +25,10 @@ const qrSchema = new Schema<IQR>(
         type: String,
         trim: true,
       },
+      phone: {
+        type: String,
+        trim: true,
+      },
       message: {
         type: String,
         trim: true,

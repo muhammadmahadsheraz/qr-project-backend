@@ -5,6 +5,8 @@ import { connectDatabase } from './config/database';
 import { errorHandler } from './middlewares/errorHandler.middleware';
 import authRoutes from './routes/auth.routes';
 import qrRoutes from './routes/qr.routes';
+import { QRController } from './controllers/qr/qr.controller';
+import { mongoIdValidation } from './validations/qr.validation';
 
 dotenv.config();
 
@@ -28,6 +30,11 @@ app.get('/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/qr', qrRoutes);
+
+// Public QR scan redirect — this is the URL embedded inside the physical QR code
+// e.g. https://yourapp.com/q/abc123
+const qrController = new QRController();
+app.get('/q/:id', mongoIdValidation, qrController.resolveRedirect);
 
 // 404 handler
 app.use('*', (req, res) => {
