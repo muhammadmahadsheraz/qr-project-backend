@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDatabase } from './config/database';
 import { errorHandler } from './middlewares/errorHandler.middleware';
 import authRoutes from './routes/auth.routes';
+import qrRoutes from './routes/qr.routes';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.get('/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/qr', qrRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -45,7 +47,8 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/health`);
-      console.log(`🔐 Auth routes: http://localhost:${PORT}/api/auth`);
+      console.log(`🔐 Auth routes:  http://localhost:${PORT}/api/auth`);
+      console.log(`📱 QR routes:    http://localhost:${PORT}/api/qr`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

@@ -55,3 +55,63 @@ Content-Type: application/json
 {
   "email": "test@example.com"
 }
+
+
+### ─────────────────────────────────────────
+### QR ENDPOINTS (requires Bearer token)
+### ─────────────────────────────────────────
+
+### Create QR - WhatsApp type
+POST http://localhost:5000/api/qr
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN
+
+{
+  "name": "My WhatsApp QR",
+  "type": "whatsapp",
+  "whatsappData": {
+    "name": "John Doe",
+    "message": "Hello! I scanned your QR code."
+  }
+}
+
+### Create QR - Website type
+POST http://localhost:5000/api/qr
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN
+
+{
+  "name": "My Website QR",
+  "type": "website",
+  "websiteData": {
+    "url": "https://example.com"
+  }
+}
+
+### Get All QRs
+GET http://localhost:5000/api/qr
+Authorization: Bearer YOUR_JWT_TOKEN
+
+### Get QR by ID
+GET http://localhost:5000/api/qr/QR_ID_HERE
+Authorization: Bearer YOUR_JWT_TOKEN
+
+### Update QR
+PUT http://localhost:5000/api/qr/QR_ID_HERE
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN
+
+{
+  "name": "Updated QR Name",
+  "whatsappData": {
+    "name": "Jane Doe",
+    "message": "Updated message"
+  }
+}
+
+### Delete QR
+DELETE http://localhost:5000/api/qr/QR_ID_HERE
+Authorization: Bearer YOUR_JWT_TOKEN
+
+### Increment Scan Count (Public - called when QR is scanned)
+PATCH http://localhost:5000/api/qr/QR_ID_HERE/scan
