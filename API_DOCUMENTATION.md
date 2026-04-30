@@ -1,13 +1,17 @@
 # QR App - API Documentation
 
-## Base URL
+## Base URLs
 ```
-http://localhost:5000/api/auth
+Auth:     http://localhost:5000/api/auth
+QR CRUD:  http://localhost:5000/api/qr
+QR Scan:  http://localhost:5000/q
 ```
 
 ---
 
 ## 📋 Table of Contents
+
+### 🔐 Auth
 1. [Signup](#1-signup)
 2. [Verify OTP](#2-verify-otp)
 3. [Login](#3-login)
@@ -15,20 +19,36 @@ http://localhost:5000/api/auth
 5. [Reset Password](#5-reset-password)
 6. [Resend OTP](#6-resend-otp)
 
+### 📱 QR
+7. [Create QR](#7-create-qr)
+8. [Get All QRs](#8-get-all-qrs)
+9. [Get QR by ID](#9-get-qr-by-id)
+10. [Update QR](#10-update-qr)
+11. [Delete QR](#11-delete-qr)
+12. [Scan Redirect](#12-scan-redirect)
+
 ---
+
+## 🔐 Authentication
+
+All QR endpoints require a JWT token in the header:
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+The token is returned from **Login** or **Verify OTP**.
+
+---
+
+# AUTH ENDPOINTS
 
 ## 1. Signup
 
-Register a new user and receive OTP via email.
+Register a new user. An OTP is sent to the provided email.
 
 ### Endpoint
 ```
 POST /api/auth/signup
-```
-
-### Request Headers
-```
-Content-Type: application/json
 ```
 
 ### Request Body
@@ -41,15 +61,14 @@ Content-Type: application/json
 }
 ```
 
-### Request Body Parameters
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| username | string | Yes | Username (min 3 characters) |
-| email | string | Yes | Valid email address |
-| phoneNumber | string | Yes | User's phone number |
-| password | string | Yes | Password (min 6 characters) |
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| username | string | Yes | Min 3 characters |
+| email | string | Yes | Valid email format |
+| phoneNumber | string | Yes | Any format |
+| password | string | Yes | Min 6 characters |
 
-### Success Response (201 Created)
+### Success Response (201)
 ```json
 {
   "success": true,
@@ -66,48 +85,27 @@ Content-Type: application/json
 }
 ```
 
-### Error Response (400 Bad Request)
+### Error Responses (400)
 ```json
-{
-  "success": false,
-  "message": "User with this email already exists"
-}
+{ "success": false, "message": "User with this email already exists" }
 ```
-
-### Validation Error Response (400 Bad Request)
 ```json
 {
   "success": false,
   "message": "Validation failed",
-  "errors": [
-    {
-      "msg": "Username must be at least 3 characters long",
-      "param": "username",
-      "location": "body"
-    }
-  ]
+  "errors": [{ "msg": "Username must be at least 3 characters long" }]
 }
 ```
-
-### Notes
-- OTP is sent to the provided email
-- OTP expires in 10 minutes (configurable)
-- User account is created but not verified until OTP is confirmed
 
 ---
 
 ## 2. Verify OTP
 
-Verify the OTP sent to email and complete registration. User is automatically logged in upon successful verification.
+Verify the OTP sent to email. Logs the user in automatically on success.
 
 ### Endpoint
 ```
 POST /api/auth/verify-otp
-```
-
-### Request Headers
-```
-Content-Type: application/json
 ```
 
 ### Request Body
@@ -118,13 +116,12 @@ Content-Type: application/json
 }
 ```
 
-### Request Body Parameters
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| email | string | Yes | Email address used during signup |
-| otp | string | Yes | 6-digit OTP received via email |
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| email | string | Yes | Must match signup email |
+| otp | string | Yes | Exactly 6 digits |
 
-### Success Response (200 OK)
+### Success Response (200)
 ```json
 {
   "success": true,
@@ -137,64 +134,28 @@ Content-Type: application/json
       "phoneNumber": "+1234567890",
       "isVerified": true
     },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NWY4YTFiMmMzZDRlNWY2YTdiOGM5ZDAiLCJpYXQiOjE2OTg3NjU0MzIsImV4cCI6MTY5OTM3MDIzMn0.abc123xyz"
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
 }
 ```
 
-### Error Responses
-
-**User Not Found (400 Bad Request)**
+### Error Responses (400)
 ```json
-{
-  "success": false,
-  "message": "User not found"
-}
+{ "success": false, "message": "User not found" }
+{ "success": false, "message": "User is already verified" }
+{ "success": false, "message": "Invalid OTP" }
+{ "success": false, "message": "OTP has expired. Please request a new one." }
 ```
-
-**Already Verified (400 Bad Request)**
-```json
-{
-  "success": false,
-  "message": "User is already verified"
-}
-```
-
-**Invalid OTP (400 Bad Request)**
-```json
-{
-  "success": false,
-  "message": "Invalid OTP"
-}
-```
-
-**Expired OTP (400 Bad Request)**
-```json
-{
-  "success": false,
-  "message": "OTP has expired. Please request a new one."
-}
-```
-
-### Notes
-- JWT token is returned upon successful verification
-- Token should be stored and used for authenticated requests
-- Token expires in 7 days (configurable)
 
 ---
 
 ## 3. Login
 
-Login with email and password for verified users.
+Login with email and password.
 
 ### Endpoint
 ```
 POST /api/auth/login
-```
-
-### Request Headers
-```
-Content-Type: application/json
 ```
 
 ### Request Body
@@ -205,13 +166,12 @@ Content-Type: application/json
 }
 ```
 
-### Request Body Parameters
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| email | string | Yes | Registered email address |
-| password | string | Yes | User's password |
+| Field | Type | Required |
+|-------|------|----------|
+| email | string | Yes |
+| password | string | Yes |
 
-### Success Response (200 OK)
+### Success Response (200)
 ```json
 {
   "success": true,
@@ -224,48 +184,26 @@ Content-Type: application/json
       "phoneNumber": "+1234567890",
       "isVerified": true
     },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NWY4YTFiMmMzZDRlNWY2YTdiOGM5ZDAiLCJpYXQiOjE2OTg3NjU0MzIsImV4cCI6MTY5OTM3MDIzMn0.abc123xyz"
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
 }
 ```
 
 ### Error Responses
-
-**Invalid Credentials (401 Unauthorized)**
 ```json
-{
-  "success": false,
-  "message": "Invalid email or password"
-}
+{ "success": false, "message": "Invalid email or password" }           // 401
+{ "success": false, "message": "Please verify your email first" }      // 401
 ```
-
-**Email Not Verified (401 Unauthorized)**
-```json
-{
-  "success": false,
-  "message": "Please verify your email first"
-}
-```
-
-### Notes
-- User must have verified their email before logging in
-- JWT token is returned for authenticated requests
-- Store the token securely on the client side
 
 ---
 
 ## 4. Forgot Password
 
-Request a password reset OTP when user forgets their password.
+Send a password reset OTP to the user's email.
 
 ### Endpoint
 ```
 POST /api/auth/forgot-password
-```
-
-### Request Headers
-```
-Content-Type: application/json
 ```
 
 ### Request Body
@@ -275,12 +213,7 @@ Content-Type: application/json
 }
 ```
 
-### Request Body Parameters
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| email | string | Yes | Registered email address |
-
-### Success Response (200 OK)
+### Success Response (200)
 ```json
 {
   "success": true,
@@ -288,33 +221,20 @@ Content-Type: application/json
 }
 ```
 
-### Error Response (400 Bad Request)
+### Error Response (400)
 ```json
-{
-  "success": false,
-  "message": "User not found"
-}
+{ "success": false, "message": "User not found" }
 ```
-
-### Notes
-- OTP is sent to the registered email
-- OTP expires in 10 minutes
-- Use this OTP with the Reset Password endpoint
 
 ---
 
 ## 5. Reset Password
 
-Reset password using the OTP received via email.
+Reset the password using the OTP received via email.
 
 ### Endpoint
 ```
 POST /api/auth/reset-password
-```
-
-### Request Headers
-```
-Content-Type: application/json
 ```
 
 ### Request Body
@@ -326,14 +246,13 @@ Content-Type: application/json
 }
 ```
 
-### Request Body Parameters
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| email | string | Yes | Registered email address |
-| otp | string | Yes | 6-digit OTP received via email |
-| newPassword | string | Yes | New password (min 6 characters) |
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| email | string | Yes | Registered email |
+| otp | string | Yes | 6-digit OTP from email |
+| newPassword | string | Yes | Min 6 characters |
 
-### Success Response (200 OK)
+### Success Response (200)
 ```json
 {
   "success": true,
@@ -341,59 +260,23 @@ Content-Type: application/json
 }
 ```
 
-### Error Responses
-
-**User Not Found (400 Bad Request)**
+### Error Responses (400)
 ```json
-{
-  "success": false,
-  "message": "User not found"
-}
+{ "success": false, "message": "User not found" }
+{ "success": false, "message": "Invalid OTP" }
+{ "success": false, "message": "OTP has expired. Please request a new one." }
+{ "success": false, "message": "OTP not found. Please request a new one." }
 ```
-
-**Invalid OTP (400 Bad Request)**
-```json
-{
-  "success": false,
-  "message": "Invalid OTP"
-}
-```
-
-**Expired OTP (400 Bad Request)**
-```json
-{
-  "success": false,
-  "message": "OTP has expired. Please request a new one."
-}
-```
-
-**OTP Not Found (400 Bad Request)**
-```json
-{
-  "success": false,
-  "message": "OTP not found. Please request a new one."
-}
-```
-
-### Notes
-- Password is automatically hashed before storing
-- User can login with new password immediately after reset
-- OTP is invalidated after successful password reset
 
 ---
 
 ## 6. Resend OTP
 
-Request a new OTP if the previous one expired or was not received.
+Resend a new OTP to the user's email (invalidates the previous one).
 
 ### Endpoint
 ```
 POST /api/auth/resend-otp
-```
-
-### Request Headers
-```
-Content-Type: application/json
 ```
 
 ### Request Body
@@ -403,12 +286,7 @@ Content-Type: application/json
 }
 ```
 
-### Request Body Parameters
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| email | string | Yes | Email address |
-
-### Success Response (200 OK)
+### Success Response (200)
 ```json
 {
   "success": true,
@@ -416,201 +294,422 @@ Content-Type: application/json
 }
 ```
 
+### Error Responses (400)
+```json
+{ "success": false, "message": "User not found" }
+{ "success": false, "message": "User is already verified" }
+{ "success": false, "message": "Email is required" }
+```
+
+---
+
+---
+
+# QR ENDPOINTS
+
+## QR Model
+
+A QR has a `type` of either `whatsapp` or `website`. The type determines which data fields are present:
+
+| type | fields |
+|------|--------|
+| `whatsapp` | `whatsappData.phone`, `whatsappData.message` |
+| `website` | `websiteData.url` |
+
+---
+
+## 7. Create QR
+
+Create a new QR code linked to the logged-in user.
+
+### Endpoint
+```
+POST /api/qr
+```
+
+### Request Headers
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+### Request Body — WhatsApp type
+```json
+{
+  "name": "My WhatsApp QR",
+  "type": "whatsapp",
+  "whatsappData": {
+    "phone": "923001234567",
+    "message": "Hello! I scanned your QR code."
+  }
+}
+```
+
+### Request Body — Website type
+```json
+{
+  "name": "My Website QR",
+  "type": "website",
+  "websiteData": {
+    "url": "https://example.com"
+  }
+}
+```
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| name | string | Yes | QR label |
+| type | string | Yes | `"whatsapp"` or `"website"` |
+| whatsappData.phone | string | If type=whatsapp | Phone number with country code, no `+` |
+| whatsappData.message | string | If type=whatsapp | Pre-filled WhatsApp message |
+| websiteData.url | string | If type=website | Valid URL |
+
+### Success Response (201) — WhatsApp
+```json
+{
+  "success": true,
+  "message": "QR created successfully",
+  "data": {
+    "qr": {
+      "id": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "name": "My WhatsApp QR",
+      "scans": 0,
+      "type": "whatsapp",
+      "whatsappData": {
+        "phone": "923001234567",
+        "message": "Hello! I scanned your QR code."
+      },
+      "userId": "65f8a1b2c3d4e5f6a7b8c9d1",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    }
+  }
+}
+```
+
+### Success Response (201) — Website
+```json
+{
+  "success": true,
+  "message": "QR created successfully",
+  "data": {
+    "qr": {
+      "id": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "name": "My Website QR",
+      "scans": 0,
+      "type": "website",
+      "websiteData": {
+        "url": "https://example.com"
+      },
+      "userId": "65f8a1b2c3d4e5f6a7b8c9d1",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    }
+  }
+}
+```
+
 ### Error Responses
+```json
+{ "success": false, "message": "Validation failed", "errors": [...] }  // 400
+{ "success": false, "message": "Authentication token is required" }    // 401
+```
 
-**User Not Found (400 Bad Request)**
+---
+
+## 8. Get All QRs
+
+Get all QR codes belonging to the logged-in user, sorted newest first.
+
+### Endpoint
+```
+GET /api/qr
+```
+
+### Request Headers
+```
+Authorization: Bearer <token>
+```
+
+### Success Response (200)
 ```json
 {
-  "success": false,
-  "message": "User not found"
+  "success": true,
+  "message": "QRs fetched successfully",
+  "data": {
+    "qrs": [
+      {
+        "id": "65f8a1b2c3d4e5f6a7b8c9d0",
+        "name": "My WhatsApp QR",
+        "scans": 14,
+        "type": "whatsapp",
+        "whatsappData": {
+          "phone": "923001234567",
+          "message": "Hello! I scanned your QR code."
+        },
+        "userId": "65f8a1b2c3d4e5f6a7b8c9d1",
+        "createdAt": "2024-01-15T10:30:00.000Z",
+        "updatedAt": "2024-01-15T10:30:00.000Z"
+      },
+      {
+        "id": "65f8a1b2c3d4e5f6a7b8c9d2",
+        "name": "My Website QR",
+        "scans": 3,
+        "type": "website",
+        "websiteData": {
+          "url": "https://example.com"
+        },
+        "userId": "65f8a1b2c3d4e5f6a7b8c9d1",
+        "createdAt": "2024-01-14T08:00:00.000Z",
+        "updatedAt": "2024-01-14T08:00:00.000Z"
+      }
+    ],
+    "total": 2
+  }
 }
 ```
 
-**Already Verified (400 Bad Request)**
+---
+
+## 9. Get QR by ID
+
+Get a single QR code by its ID. Only returns QRs owned by the logged-in user.
+
+### Endpoint
+```
+GET /api/qr/:id
+```
+
+### Request Headers
+```
+Authorization: Bearer <token>
+```
+
+### Success Response (200)
 ```json
 {
-  "success": false,
-  "message": "User is already verified"
+  "success": true,
+  "message": "QR fetched successfully",
+  "data": {
+    "qr": {
+      "id": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "name": "My WhatsApp QR",
+      "scans": 14,
+      "type": "whatsapp",
+      "whatsappData": {
+        "phone": "923001234567",
+        "message": "Hello! I scanned your QR code."
+      },
+      "userId": "65f8a1b2c3d4e5f6a7b8c9d1",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    }
+  }
 }
 ```
 
-**Email Required (400 Bad Request)**
+### Error Responses
+```json
+{ "success": false, "message": "QR not found" }           // 404
+{ "success": false, "message": "Invalid QR ID" }          // 400
+```
+
+---
+
+## 10. Update QR
+
+Update a QR code. Only the owner can update it. All fields are optional.
+
+### Endpoint
+```
+PUT /api/qr/:id
+```
+
+### Request Headers
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+### Request Body — Update WhatsApp QR
+```json
+{
+  "name": "Updated QR Name",
+  "whatsappData": {
+    "phone": "923009876543",
+    "message": "New pre-filled message"
+  }
+}
+```
+
+### Request Body — Update Website QR
+```json
+{
+  "name": "Updated QR Name",
+  "websiteData": {
+    "url": "https://newurl.com"
+  }
+}
+```
+
+### Request Body — Switch type from website to whatsapp
+```json
+{
+  "type": "whatsapp",
+  "whatsappData": {
+    "phone": "923001234567",
+    "message": "Hello!"
+  }
+}
+```
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| name | string | No | Cannot be empty if provided |
+| type | string | No | `"whatsapp"` or `"website"` |
+| whatsappData.phone | string | No | Required if switching to whatsapp |
+| whatsappData.message | string | No | Required if switching to whatsapp |
+| websiteData.url | string | No | Valid URL |
+
+### Success Response (200)
+```json
+{
+  "success": true,
+  "message": "QR updated successfully",
+  "data": {
+    "qr": {
+      "id": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "name": "Updated QR Name",
+      "scans": 14,
+      "type": "whatsapp",
+      "whatsappData": {
+        "phone": "923009876543",
+        "message": "New pre-filled message"
+      },
+      "userId": "65f8a1b2c3d4e5f6a7b8c9d1",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T11:00:00.000Z"
+    }
+  }
+}
+```
+
+### Error Responses
+```json
+{ "success": false, "message": "QR not found" }   // 404
+{ "success": false, "message": "Invalid QR ID" }  // 400
+```
+
+---
+
+## 11. Delete QR
+
+Delete a QR code. Only the owner can delete it.
+
+### Endpoint
+```
+DELETE /api/qr/:id
+```
+
+### Request Headers
+```
+Authorization: Bearer <token>
+```
+
+### Success Response (200)
+```json
+{
+  "success": true,
+  "message": "QR deleted successfully"
+}
+```
+
+### Error Responses
+```json
+{ "success": false, "message": "QR not found" }   // 404
+{ "success": false, "message": "Invalid QR ID" }  // 400
+```
+
+---
+
+## 12. Scan Redirect
+
+**This is the URL embedded inside the physical QR image.** When a user scans the QR code with their phone camera, this endpoint is hit. It increments the scan count and redirects to the appropriate destination.
+
+### Endpoint
+```
+GET /q/:id
+```
+
+### Access
+Public — no token required.
+
+### Behavior
+
+| QR type | Redirect destination |
+|---------|----------------------|
+| `website` | The stored URL directly, e.g. `https://example.com` |
+| `whatsapp` | A WhatsApp deep link: `https://wa.me/<phone>?text=<encodedMessage>` |
+
+### Success Response
+```
+HTTP 302 Found
+Location: https://wa.me/923001234567?text=Hello%21%20I%20scanned%20your%20QR%20code.
+```
+or
+```
+HTTP 302 Found
+Location: https://example.com
+```
+
+The browser/phone follows the redirect automatically. No JSON is returned.
+
+### Error Response (404)
 ```json
 {
   "success": false,
-  "message": "Email is required"
+  "message": "QR not found"
 }
 ```
 
 ### Notes
-- New OTP is generated and sent to email
-- Previous OTP is invalidated
-- New OTP expires in 10 minutes
-
----
-
-## 🔐 Authentication for Protected Routes
-
-For future protected endpoints, include the JWT token in the request header:
-
-### Request Headers
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Content-Type: application/json
-```
-
-### Example Protected Request
-```bash
-curl -X GET http://localhost:5000/api/protected-route \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json"
-```
+- Scan count is incremented atomically on every hit
+- The QR image generated by the frontend should encode the URL as `https://yourapp.com/q/<qr_id>`
+- No authentication needed — anyone who scans the QR can trigger this
 
 ---
 
 ## 📊 HTTP Status Codes
 
-| Status Code | Description |
-|-------------|-------------|
-| 200 | OK - Request successful |
-| 201 | Created - Resource created successfully |
-| 400 | Bad Request - Invalid input or validation error |
-| 401 | Unauthorized - Invalid credentials or token |
-| 403 | Forbidden - Access denied |
-| 404 | Not Found - Resource not found |
-| 500 | Internal Server Error - Server error |
-
----
-
-## 🧪 Testing Flow
-
-### Complete User Journey
-
-1. **Signup**
-   ```bash
-   POST /api/auth/signup
-   Body: { username, email, phoneNumber, password }
-   → Check email for OTP
-   ```
-
-2. **Verify OTP**
-   ```bash
-   POST /api/auth/verify-otp
-   Body: { email, otp }
-   → Save the JWT token
-   ```
-
-3. **Login (Future sessions)**
-   ```bash
-   POST /api/auth/login
-   Body: { email, password }
-   → Save the JWT token
-   ```
-
-### Forgot Password Flow
-
-1. **Request Reset**
-   ```bash
-   POST /api/auth/forgot-password
-   Body: { email }
-   → Check email for OTP
-   ```
-
-2. **Reset Password**
-   ```bash
-   POST /api/auth/reset-password
-   Body: { email, otp, newPassword }
-   ```
-
-3. **Login with New Password**
-   ```bash
-   POST /api/auth/login
-   Body: { email, newPassword }
-   ```
-
----
-
-## 🛠️ Testing Tools
-
-### Using cURL
-
-**Signup Example:**
-```bash
-curl -X POST http://localhost:5000/api/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "johndoe",
-    "email": "john@example.com",
-    "phoneNumber": "+1234567890",
-    "password": "password123"
-  }'
-```
-
-**Login Example:**
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "password": "password123"
-  }'
-```
-
-### Using Postman/Thunder Client
-
-1. Create a new collection named "QR App Auth"
-2. Add all 6 endpoints
-3. Set environment variable for `baseUrl`: `http://localhost:5000/api/auth`
-4. Test each endpoint in sequence
-
----
-
-## 📝 Common Error Messages
-
-| Error Message | Cause | Solution |
-|---------------|-------|----------|
-| "User with this email already exists" | Email already registered | Use different email or login |
-| "Invalid email or password" | Wrong credentials | Check email and password |
-| "Please verify your email first" | Email not verified | Complete OTP verification |
-| "Invalid OTP" | Wrong OTP entered | Check email for correct OTP |
-| "OTP has expired" | OTP older than 10 minutes | Request new OTP via resend |
-| "Validation failed" | Invalid input format | Check request body format |
+| Code | Meaning |
+|------|---------|
+| 200 | OK |
+| 201 | Created |
+| 302 | Redirect (scan endpoint) |
+| 400 | Bad Request / Validation error |
+| 401 | Unauthorized — missing or invalid token |
+| 403 | Forbidden — email not verified |
+| 404 | Not Found |
+| 500 | Internal Server Error |
 
 ---
 
 ## 🔒 Security Notes
 
-- Passwords are hashed using bcrypt before storage
+- Passwords hashed with bcrypt
 - OTPs expire after 10 minutes
 - JWT tokens expire after 7 days
-- All sensitive fields are excluded from responses
-- Input validation on all endpoints
-- Email verification required before login
+- QR CRUD operations are scoped to the owner — you cannot read, update, or delete another user's QRs
+- The scan redirect endpoint is intentionally public
 
 ---
 
-## 📧 Email Configuration
+## 📝 Common Errors
 
-Make sure your `.env` file has correct email settings:
-
-```env
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-```
-
-For Gmail, use App Password (not regular password):
-1. Enable 2FA on Gmail
-2. Generate App Password from Google Account settings
-3. Use that password in EMAIL_PASSWORD
-
----
-
-## 🎯 Next Steps
-
-After authentication is working:
-- Add QR code generation endpoints
-- Add QR code scanning endpoints
-- Add user profile management
-- Add QR code data retrieval by ID
+| Message | Cause |
+|---------|-------|
+| `"Authentication token is required"` | No `Authorization` header sent |
+| `"Invalid or expired token"` | Token is wrong or has expired |
+| `"QR not found"` | ID doesn't exist or belongs to another user |
+| `"Invalid QR ID"` | ID is not a valid MongoDB ObjectId |
+| `"Validation failed"` | Missing or invalid fields in request body |
