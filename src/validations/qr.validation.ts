@@ -14,12 +14,6 @@ export const createQRValidation = [
     .withMessage('Type must be either "whatsapp" or "website"'),
 
   // Whatsapp-specific validation
-  body('whatsappData.name')
-    .if(body('type').equals('whatsapp'))
-    .trim()
-    .notEmpty()
-    .withMessage('WhatsApp name is required when type is whatsapp'),
-
   body('whatsappData.phone')
     .if(body('type').equals('whatsapp'))
     .trim()
@@ -58,11 +52,11 @@ export const updateQRValidation = [
     .isIn(['whatsapp', 'website'])
     .withMessage('Type must be either "whatsapp" or "website"'),
 
-  body('whatsappData.name')
+  body('whatsappData.phone')
     .optional()
     .trim()
     .notEmpty()
-    .withMessage('WhatsApp name cannot be empty'),
+    .withMessage('WhatsApp phone cannot be empty'),
 
   body('whatsappData.message')
     .optional()

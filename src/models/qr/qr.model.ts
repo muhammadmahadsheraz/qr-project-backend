@@ -21,10 +21,6 @@ const qrSchema = new Schema<IQR>(
       required: [true, 'QR type is required'],
     },
     whatsappData: {
-      name: {
-        type: String,
-        trim: true,
-      },
       phone: {
         type: String,
         trim: true,

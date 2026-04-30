@@ -3,7 +3,6 @@ import { Document, Types } from 'mongoose';
 export type QRType = 'whatsapp' | 'website';
 
 export interface IWhatsappData {
-  name: string;
   phone: string;
   message: string;
 }

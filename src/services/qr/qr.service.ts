@@ -7,7 +7,7 @@ export class QRService {
     name: string,
     type: QRType,
     typeData: {
-      whatsappData?: { name: string; phone: string; message: string };
+      whatsappData?: { phone: string; message: string };
       websiteData?: { url: string };
     }
   ): Promise<IQRResponse> {
@@ -64,7 +64,7 @@ export class QRService {
     updates: {
       name?: string;
       type?: QRType;
-      whatsappData?: { name: string; phone: string; message: string };
+      whatsappData?: { phone: string; message: string };
       websiteData?: { url: string };
     }
   ): Promise<IQRResponse> {
