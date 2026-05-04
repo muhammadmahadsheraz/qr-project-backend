@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth/auth.controller';
+import { authenticate } from '../middlewares/auth.middleware';
 import {
   signupValidation,
   verifyOTPValidation,
   loginValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
+  updateUserValidation,
 } from '../validations/auth.validation';
 
 const router = Router();
@@ -52,5 +54,12 @@ router.post('/reset-password', resetPasswordValidation, authController.resetPass
  * @access  Public
  */
 router.post('/resend-otp', authController.resendOTP);
+
+/**
+ * @route   PUT /api/auth/update-profile
+ * @desc    Update logged-in user's profile (username, email, phoneNumber)
+ * @access  Private
+ */
+router.put('/update-profile', authenticate, updateUserValidation, authController.updateUser);
 
 export default router;

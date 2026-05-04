@@ -257,4 +257,51 @@ export class AuthService {
       message: 'OTP resent successfully. Please check your email.',
     };
   }
+
+  async updateUser(
+    userId: string,
+    updates: { username?: string; email?: string; phoneNumber?: string }
+  ): Promise<IAuthResponse> {
+    // If email is being changed, make sure it's not taken by another user
+    if (updates.email) {
+      const emailTaken = await User.findOne({
+        email: updates.email,
+        _id: { $ne: userId },
+      });
+
+      if (emailTaken) {
+        return {
+          success: false,
+          message: 'Email is already in use by another account',
+        };
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User not found',
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        user: {
+          id: user._id.toString(),
+          username: user.username,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          isVerified: user.isVerified,
+        },
+      },
+    };
+  }
 }

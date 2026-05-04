@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import { AuthService } from '../../services/auth/auth.service';
+import { AuthRequest } from '../../middlewares/auth.middleware';
 
 const authService = new AuthService();
 
@@ -123,6 +124,27 @@ export class AuthController {
       }
 
       const result = await authService.resendOTP(email);
+      res.status(result.success ? 200 : 400).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateUser(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          errors: errors.array(),
+        });
+        return;
+      }
+
+      const { username, email, phoneNumber } = req.body;
+      const result = await authService.updateUser(req.userId!, { username, email, phoneNumber });
+
       res.status(result.success ? 200 : 400).json(result);
     } catch (error) {
       next(error);

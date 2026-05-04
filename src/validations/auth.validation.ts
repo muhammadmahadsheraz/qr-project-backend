@@ -84,3 +84,24 @@ export const resetPasswordValidation = [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
 ];
+
+export const updateUserValidation = [
+  body('username')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Username cannot be empty')
+    .isLength({ min: 3 })
+    .withMessage('Username must be at least 3 characters long'),
+  body('email')
+    .optional()
+    .trim()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+  body('phoneNumber')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Phone number cannot be empty'),
+];

@@ -48,15 +48,13 @@ Register a new user. An OTP is sent to the provided email.
 
 ### Endpoint
 ```
-POST /api/auth/signup
+POST /api/auth/signup/:id
 ```
 
 ### Request Body
 ```json
 {
-  "username": "johndoe",
   "email": "john@example.com",
-  "phoneNumber": "+1234567890",
   "password": "password123"
 }
 ```
