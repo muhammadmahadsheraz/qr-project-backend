@@ -18,14 +18,15 @@ QR Scan:  http://localhost:5000/q
 4. [Forgot Password](#4-forgot-password)
 5. [Reset Password](#5-reset-password)
 6. [Resend OTP](#6-resend-otp)
+7. [Update Profile](#7-update-profile)
 
 ### 📱 QR
-7. [Create QR](#7-create-qr)
-8. [Get All QRs](#8-get-all-qrs)
-9. [Get QR by ID](#9-get-qr-by-id)
-10. [Update QR](#10-update-qr)
-11. [Delete QR](#11-delete-qr)
-12. [Scan Redirect](#12-scan-redirect)
+8. [Create QR](#8-create-qr)
+9. [Get All QRs](#9-get-all-qrs)
+10. [Get QR by ID](#10-get-qr-by-id)
+11. [Update QR](#11-update-qr)
+12. [Delete QR](#12-delete-qr)
+13. [Scan Redirect](#13-scan-redirect)
 
 ---
 
@@ -301,6 +302,66 @@ POST /api/auth/resend-otp
 
 ---
 
+## 7. Update Profile
+
+Update the logged-in user's profile. All fields are optional — only send what needs to change.
+
+### Endpoint
+```
+PUT /api/auth/update-profile
+```
+
+### Request Headers
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+### Request Body
+```json
+{
+  "username": "newusername",
+  "email": "newemail@example.com",
+  "phoneNumber": "+9230012345"
+}
+```
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| username | string | No | Min 3 characters if provided |
+| email | string | No | Valid email format if provided |
+| phoneNumber | string | No | Cannot be empty if provided |
+
+### Success Response (200)
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    "user": {
+      "id": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "username": "newusername",
+      "email": "newemail@example.com",
+      "phoneNumber": "+9230012345",
+      "isVerified": true
+    }
+  }
+}
+```
+
+### Error Responses
+```json
+{ "success": false, "message": "Email is already in use by another account" }  // 400
+{ "success": false, "message": "Authentication token is required" }            // 401
+{ "success": false, "message": "Validation failed", "errors": [...] }          // 400
+```
+
+### Notes
+- Password cannot be changed here — use the forgot password / reset password flow
+- If changing email, the new email must not be taken by another account
+
+---
+
 ---
 
 # QR ENDPOINTS
@@ -316,7 +377,7 @@ A QR has a `type` of either `whatsapp` or `website`. The type determines which d
 
 ---
 
-## 7. Create QR
+## 8. Create QR
 
 Create a new QR code linked to the logged-in user.
 
@@ -415,7 +476,7 @@ Content-Type: application/json
 
 ---
 
-## 8. Get All QRs
+## 9. Get All QRs
 
 Get all QR codes belonging to the logged-in user, sorted newest first.
 
@@ -469,7 +530,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 9. Get QR by ID
+## 10. Get QR by ID
 
 Get a single QR code by its ID. Only returns QRs owned by the logged-in user.
 
@@ -514,7 +575,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 10. Update QR
+## 11. Update QR
 
 Update a QR code. Only the owner can update it. All fields are optional.
 
@@ -600,7 +661,7 @@ Content-Type: application/json
 
 ---
 
-## 11. Delete QR
+## 12. Delete QR
 
 Delete a QR code. Only the owner can delete it.
 
@@ -630,7 +691,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 12. Scan Redirect
+## 13. Scan Redirect
 
 **This is the URL embedded inside the physical QR image.** When a user scans the QR code with their phone camera, this endpoint is hit. It increments the scan count and redirects to the appropriate destination.
 
