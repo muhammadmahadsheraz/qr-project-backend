@@ -15,8 +15,8 @@ const qrSchema = new Schema<IQR>(
     type: {
       type: String,
       enum: {
-        values: ['whatsapp', 'website'],
-        message: 'Type must be either "whatsapp" or "website"',
+        values: ['whatsapp', 'website', 'image'],
+        message: 'Type must be either "whatsapp", "website", or "image"',
       },
       required: [true, 'QR type is required'],
     },
@@ -32,6 +32,20 @@ const qrSchema = new Schema<IQR>(
     },
     websiteData: {
       url: {
+        type: String,
+        trim: true,
+      },
+    },
+    imageData: {
+      imageName: {
+        type: String,
+        trim: true,
+      },
+      imageUrl: {
+        type: String,
+        trim: true,
+      },
+      imageDescription: {
         type: String,
         trim: true,
       },

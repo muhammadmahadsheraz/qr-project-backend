@@ -10,8 +10,8 @@ export const createQRValidation = [
     .trim()
     .notEmpty()
     .withMessage('QR type is required')
-    .isIn(['whatsapp', 'website'])
-    .withMessage('Type must be either "whatsapp" or "website"'),
+    .isIn(['whatsapp', 'website', 'image'])
+    .withMessage('Type must be "whatsapp", "website", or "image"'),
 
   // Whatsapp-specific validation
   body('whatsappData.phone')
@@ -34,6 +34,27 @@ export const createQRValidation = [
     .withMessage('URL is required when type is website')
     .isURL()
     .withMessage('Please provide a valid URL'),
+
+  // Image-specific validation
+  body('imageData.imageName')
+    .if(body('type').equals('image'))
+    .trim()
+    .notEmpty()
+    .withMessage('Image name is required when type is image'),
+
+  body('imageData.imageUrl')
+    .if(body('type').equals('image'))
+    .trim()
+    .notEmpty()
+    .withMessage('Image URL is required when type is image')
+    .isURL()
+    .withMessage('Please provide a valid image URL'),
+
+  body('imageData.imageDescription')
+    .if(body('type').equals('image'))
+    .trim()
+    .notEmpty()
+    .withMessage('Image description is required when type is image'),
 ];
 
 export const updateQRValidation = [
@@ -49,8 +70,8 @@ export const updateQRValidation = [
 
   body('type')
     .optional()
-    .isIn(['whatsapp', 'website'])
-    .withMessage('Type must be either "whatsapp" or "website"'),
+    .isIn(['whatsapp', 'website', 'image'])
+    .withMessage('Type must be "whatsapp", "website", or "image"'),
 
   body('whatsappData.phone')
     .optional()
@@ -69,6 +90,24 @@ export const updateQRValidation = [
     .trim()
     .isURL()
     .withMessage('Please provide a valid URL'),
+
+  body('imageData.imageName')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Image name cannot be empty'),
+
+  body('imageData.imageUrl')
+    .optional()
+    .trim()
+    .isURL()
+    .withMessage('Please provide a valid image URL'),
+
+  body('imageData.imageDescription')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Image description cannot be empty'),
 ];
 
 export const mongoIdValidation = [

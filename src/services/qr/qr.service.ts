@@ -9,14 +9,17 @@ export class QRService {
     typeData: {
       whatsappData?: { phone: string; message: string };
       websiteData?: { url: string };
+      imageData?: { imageName: string; imageUrl: string; imageDescription: string };
     }
   ): Promise<IQRResponse> {
     const qrPayload: any = { name, type, userId };
 
     if (type === 'whatsapp') {
       qrPayload.whatsappData = typeData.whatsappData;
-    } else {
+    } else if (type === 'website') {
       qrPayload.websiteData = typeData.websiteData;
+    } else if (type === 'image') {
+      qrPayload.imageData = typeData.imageData;
     }
 
     const qr = await QR.create(qrPayload);
@@ -66,6 +69,7 @@ export class QRService {
       type?: QRType;
       whatsappData?: { phone: string; message: string };
       websiteData?: { url: string };
+      imageData?: { imageName: string; imageUrl: string; imageDescription: string };
     }
   ): Promise<IQRResponse> {
     const qr = await QR.findOne({ _id: qrId, userId });
@@ -88,12 +92,25 @@ export class QRService {
 
     if (effectiveType === 'whatsapp') {
       if (updates.whatsappData) updatePayload.whatsappData = updates.whatsappData;
-      // Clear website data if switching type
-      if (updates.type === 'whatsapp') updatePayload.websiteData = undefined;
-    } else {
+      // Clear other data if switching type
+      if (updates.type === 'whatsapp') {
+        updatePayload.websiteData = undefined;
+        updatePayload.imageData = undefined;
+      }
+    } else if (effectiveType === 'website') {
       if (updates.websiteData) updatePayload.websiteData = updates.websiteData;
-      // Clear whatsapp data if switching type
-      if (updates.type === 'website') updatePayload.whatsappData = undefined;
+      // Clear other data if switching type
+      if (updates.type === 'website') {
+        updatePayload.whatsappData = undefined;
+        updatePayload.imageData = undefined;
+      }
+    } else if (effectiveType === 'image') {
+      if (updates.imageData) updatePayload.imageData = updates.imageData;
+      // Clear other data if switching type
+      if (updates.type === 'image') {
+        updatePayload.whatsappData = undefined;
+        updatePayload.websiteData = undefined;
+      }
     }
 
     const updatedQR = await QR.findByIdAndUpdate(qrId, updatePayload, {
@@ -161,6 +178,8 @@ export class QRService {
 
     if (qr.type === 'website') {
       redirectUrl = qr.websiteData!.url;
+    } else if (qr.type === 'image') {
+      redirectUrl = qr.imageData!.imageUrl;
     } else {
       // Build WhatsApp deep link: https://wa.me/<phone>?text=<encodedMessage>
       const encodedMessage = encodeURIComponent(qr.whatsappData!.message);
@@ -183,8 +202,10 @@ export class QRService {
 
     if (qr.type === 'whatsapp') {
       return { ...base, whatsappData: qr.whatsappData };
-    } else {
+    } else if (qr.type === 'website') {
       return { ...base, websiteData: qr.websiteData };
+    } else {
+      return { ...base, imageData: qr.imageData };
     }
   }
 }
