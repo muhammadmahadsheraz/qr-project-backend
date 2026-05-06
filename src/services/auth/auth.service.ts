@@ -262,8 +262,8 @@ export class AuthService {
     userId: string,
     updates: { username?: string; email?: string; phoneNumber?: string }
   ): Promise<IAuthResponse> {
-    // If email is being changed, make sure it's not taken by another user
     if (updates.email) {
+      // Prevent email conflicts across users
       const emailTaken = await User.findOne({
         email: updates.email,
         _id: { $ne: userId },

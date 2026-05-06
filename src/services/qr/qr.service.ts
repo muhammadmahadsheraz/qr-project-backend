@@ -81,10 +81,7 @@ export class QRService {
       };
     }
 
-    // Determine the effective type after update
     const effectiveType = updates.type || qr.type;
-
-    // Build update payload
     const updatePayload: any = {};
 
     if (updates.name) updatePayload.name = updates.name;
@@ -92,21 +89,19 @@ export class QRService {
 
     if (effectiveType === 'whatsapp') {
       if (updates.whatsappData) updatePayload.whatsappData = updates.whatsappData;
-      // Clear other data if switching type
+      // Clear other type data when switching types
       if (updates.type === 'whatsapp') {
         updatePayload.websiteData = undefined;
         updatePayload.imageData = undefined;
       }
     } else if (effectiveType === 'website') {
       if (updates.websiteData) updatePayload.websiteData = updates.websiteData;
-      // Clear other data if switching type
       if (updates.type === 'website') {
         updatePayload.whatsappData = undefined;
         updatePayload.imageData = undefined;
       }
     } else if (effectiveType === 'image') {
       if (updates.imageData) updatePayload.imageData = updates.imageData;
-      // Clear other data if switching type
       if (updates.type === 'image') {
         updatePayload.whatsappData = undefined;
         updatePayload.websiteData = undefined;
@@ -162,8 +157,8 @@ export class QRService {
     };
   }
 
-  // Resolves the redirect URL and increments scan count atomically
   async resolveRedirectUrl(qrId: string): Promise<{ success: boolean; redirectUrl?: string; message?: string }> {
+    // Atomic operation: increment scan count and fetch updated QR in one DB call
     const qr = await QR.findByIdAndUpdate(
       qrId,
       { $inc: { scans: 1 } },
@@ -181,7 +176,7 @@ export class QRService {
     } else if (qr.type === 'image') {
       redirectUrl = qr.imageData!.imageUrl;
     } else {
-      // Build WhatsApp deep link: https://wa.me/<phone>?text=<encodedMessage>
+      // WhatsApp deep link with URL-encoded message
       const encodedMessage = encodeURIComponent(qr.whatsappData!.message);
       redirectUrl = `https://wa.me/${qr.whatsappData!.phone}?text=${encodedMessage}`;
     }

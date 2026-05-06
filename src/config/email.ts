@@ -16,7 +16,7 @@ const createTransporter = () => {
 };
 
 export const sendOTPEmail = async (email: string, otp: string): Promise<void> => {
-  // For development: Log OTP to console if email is not configured
+  // Fallback to console logging if SMTP not configured (development mode)
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.log('\n📧 EMAIL NOT CONFIGURED - OTP for', email, ':', otp);
     console.log('⏰ OTP expires in', process.env.OTP_EXPIRES_IN, 'minutes\n');
@@ -49,6 +49,6 @@ export const sendOTPEmail = async (email: string, otp: string): Promise<void> =>
     console.error('❌ Failed to send email:', error.message);
     console.log('📧 OTP for', email, ':', otp);
     console.log('⏰ OTP expires in', process.env.OTP_EXPIRES_IN, 'minutes');
-    // Don't throw error - allow signup to continue even if email fails
+    // Continue signup even if email fails (fallback to console OTP)
   }
 };

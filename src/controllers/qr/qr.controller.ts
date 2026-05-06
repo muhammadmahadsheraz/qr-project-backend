@@ -122,7 +122,6 @@ export class QRController {
     }
   }
 
-  // Called when a physical QR code is scanned — increments scan count and redirects
   async resolveRedirect(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const errors = validationResult(req);
@@ -144,7 +143,6 @@ export class QRController {
         return;
       }
 
-      // 302 redirect to the resolved URL
       res.redirect(302, result.redirectUrl);
     } catch (error) {
       next(error);

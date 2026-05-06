@@ -13,12 +13,10 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -27,16 +25,13 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/qr', qrRoutes);
 
-// Public QR scan redirect — this is the URL embedded inside the physical QR code
-// e.g. https://yourapp.com/q/abc123
+// Public endpoint for QR scan redirects (embedded in QR image)
 const qrController = new QRController();
 app.get('/q/:id', mongoIdValidation, qrController.resolveRedirect);
 
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -44,10 +39,8 @@ app.use('*', (req, res) => {
   });
 });
 
-// Error handler middleware (must be last)
 app.use(errorHandler);
 
-// Start server
 const startServer = async () => {
   try {
     await connectDatabase();
