@@ -368,12 +368,13 @@ Content-Type: application/json
 
 ## QR Model
 
-A QR has a `type` of either `whatsapp` or `website`. The type determines which data fields are present:
+A QR has a `type` of either `whatsapp`, `website`, or `image`. The type determines which data fields are present:
 
-| type | fields |
-|------|--------|
-| `whatsapp` | `whatsappData.phone`, `whatsappData.message` |
-| `website` | `websiteData.url` |
+| type | fields | redirect to |
+|------|--------|-------------|
+| `whatsapp` | `whatsappData.phone`, `whatsappData.message` | WhatsApp deep link |
+| `website` | `websiteData.url` | Website URL directly |
+| `image` | `imageData.imageName`, `imageData.imageUrl`, `imageData.imageDescription` | Image URL (S3, CDN, etc.) |
 
 ---
 
@@ -415,13 +416,29 @@ Content-Type: application/json
 }
 ```
 
+### Request Body — Image type
+```json
+{
+  "name": "Product Photo",
+  "type": "image",
+  "imageData": {
+    "imageName": "Summer Collection 2024",
+    "imageUrl": "https://s3.amazonaws.com/my-bucket/summer-collection.jpg",
+    "imageDescription": "Our latest summer clothing collection"
+  }
+}
+```
+
 | Field | Type | Required | Rules |
 |-------|------|----------|-------|
 | name | string | Yes | QR label |
-| type | string | Yes | `"whatsapp"` or `"website"` |
+| type | string | Yes | `"whatsapp"`, `"website"`, or `"image"` |
 | whatsappData.phone | string | If type=whatsapp | Phone number with country code, no `+` |
 | whatsappData.message | string | If type=whatsapp | Pre-filled WhatsApp message |
 | websiteData.url | string | If type=website | Valid URL |
+| imageData.imageName | string | If type=image | Display name for the image |
+| imageData.imageUrl | string | If type=image | Valid image URL (S3, CDN, etc.) |
+| imageData.imageDescription | string | If type=image | Alt text / description |
 
 ### Success Response (201) — WhatsApp
 ```json
@@ -459,6 +476,30 @@ Content-Type: application/json
       "type": "website",
       "websiteData": {
         "url": "https://example.com"
+      },
+      "userId": "65f8a1b2c3d4e5f6a7b8c9d1",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    }
+  }
+}
+```
+
+### Success Response (201) — Image
+```json
+{
+  "success": true,
+  "message": "QR created successfully",
+  "data": {
+    "qr": {
+      "id": "65f8a1b2c3d4e5f6a7b8c9d2",
+      "name": "Product Photo",
+      "scans": 0,
+      "type": "image",
+      "imageData": {
+        "imageName": "Summer Collection 2024",
+        "imageUrl": "https://s3.amazonaws.com/my-bucket/summer-collection.jpg",
+        "imageDescription": "Our latest summer clothing collection"
       },
       "userId": "65f8a1b2c3d4e5f6a7b8c9d1",
       "createdAt": "2024-01-15T10:30:00.000Z",
@@ -611,6 +652,18 @@ Content-Type: application/json
 }
 ```
 
+### Request Body — Update Image QR
+```json
+{
+  "name": "Updated Product Photo",
+  "imageData": {
+    "imageName": "Winter Collection 2024",
+    "imageUrl": "https://s3.amazonaws.com/my-bucket/winter-collection.jpg",
+    "imageDescription": "Our latest winter clothing collection"
+  }
+}
+```
+
 ### Request Body — Switch type from website to whatsapp
 ```json
 {
@@ -625,10 +678,13 @@ Content-Type: application/json
 | Field | Type | Required | Rules |
 |-------|------|----------|-------|
 | name | string | No | Cannot be empty if provided |
-| type | string | No | `"whatsapp"` or `"website"` |
+| type | string | No | `"whatsapp"`, `"website"`, or `"image"` |
 | whatsappData.phone | string | No | Required if switching to whatsapp |
 | whatsappData.message | string | No | Required if switching to whatsapp |
 | websiteData.url | string | No | Valid URL |
+| imageData.imageName | string | No | Cannot be empty if provided |
+| imageData.imageUrl | string | No | Valid image URL |
+| imageData.imageDescription | string | No | Cannot be empty if provided |
 
 ### Success Response (200)
 ```json
@@ -709,6 +765,7 @@ Public — no token required.
 |---------|----------------------|
 | `website` | The stored URL directly, e.g. `https://example.com` |
 | `whatsapp` | A WhatsApp deep link: `https://wa.me/<phone>?text=<encodedMessage>` |
+| `image` | The image URL directly, e.g. `https://s3.amazonaws.com/my-bucket/image.jpg` |
 
 ### Success Response
 ```
@@ -719,6 +776,11 @@ or
 ```
 HTTP 302 Found
 Location: https://example.com
+```
+or
+```
+HTTP 302 Found
+Location: https://s3.amazonaws.com/my-bucket/summer-collection.jpg
 ```
 
 The browser/phone follows the redirect automatically. No JSON is returned.
