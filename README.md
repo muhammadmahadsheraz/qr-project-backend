@@ -1,296 +1,260 @@
-# QR App Backend - Authentication System
+# QR App Backend
 
-A professional Node.js/Express backend with MongoDB for QR code management with complete authentication system.
+A professional Node.js/Express backend for QR code management with complete authentication and multi-type QR support.
 
 ## 🚀 Features
 
-- **User Signup** with email OTP verification
-- **User Login** with email and password
-- **Forgot Password** flow with OTP verification
-- **Password Reset** functionality
-- **Resend OTP** capability
-- JWT-based authentication
-- Professional folder structure
-- Input validation
-- Error handling
+### Authentication
+- User signup with email OTP verification
+- Email/password login
+- Forgot password with OTP reset
+- Profile update (username, email, phone)
+- JWT-based session management
+
+### QR Management
+- Create QR codes with 3 types:
+  - **Website** — redirect to URL
+  - **WhatsApp** — deep link with pre-filled message
+  - **Image** — redirect to image URL (S3, CDN, etc.)
+- Full CRUD operations (Create, Read, Update, Delete)
+- Automatic scan counting
+- Public scan redirect endpoint
+
+### Security
+- Password hashing with bcrypt
+- OTP expiration (10 minutes)
+- JWT token expiration (7 days)
+- Email uniqueness validation
+- Input validation on all endpoints
+- Scoped data access (users can only access their own QRs)
 
 ## 📁 Project Structure
 
 ```
 src/
-├── config/
-│   ├── database.ts          # MongoDB connection
-│   └── email.ts              # Email/OTP configuration
-├── controllers/
-│   └── auth/
-│       └── auth.controller.ts
-├── interfaces/
-│   └── user.interface.ts
-├── middlewares/
-│   ├── auth.middleware.ts
-│   └── errorHandler.middleware.ts
-├── models/
-│   └── auth/
-│       └── user.model.ts
-├── routes/
-│   └── auth.routes.ts
-├── services/
-│   └── auth/
-│       └── auth.service.ts
-├── utils/
-│   ├── jwt.util.ts
-│   └── otp.util.ts
-├── validations/
-│   └── auth.validation.ts
-└── app.ts
+├── config/              # Configuration (database, email)
+├── controllers/         # Request handlers
+│   ├── auth/
+│   └── qr/
+├── interfaces/          # TypeScript interfaces
+├── middlewares/         # Auth, error handling
+├── models/              # MongoDB schemas
+│   ├── auth/
+│   └── qr/
+├── routes/              # API routes
+├── services/            # Business logic
+│   ├── auth/
+│   └── qr/
+├── utils/               # JWT, OTP utilities
+├── validations/         # Input validation
+└── app.ts              # Express app setup
 ```
 
 ## 🔧 Installation
 
-1. **Install dependencies:**
+### Prerequisites
+- Node.js 16+
+- MongoDB Atlas account
+- Gmail account (for OTP emails)
+
+### Setup
+
+1. **Clone and install:**
 ```bash
 npm install
 ```
 
-2. **Setup environment variables:**
+2. **Create `.env` file:**
 ```bash
 cp .env.example .env
 ```
 
-3. **Configure `.env` file:**
+3. **Configure environment variables:**
 ```env
 PORT=5000
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/qr-app
-JWT_SECRET=your_secret_key
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/qr-app
+JWT_SECRET=your-secret-key-here
 JWT_EXPIRES_IN=7d
 
-# Email Configuration (Gmail)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
 
 OTP_EXPIRES_IN=10
+NODE_ENV=development
 ```
 
-## 📧 Email Setup (Gmail)
-
-1. Enable 2-Factor Authentication on your Gmail account
-2. Generate an App Password:
-   - Go to Google Account → Security → 2-Step Verification → App passwords
-   - Generate a new app password
-   - Use this password in `EMAIL_PASSWORD`
-
-## 🏃 Running the Application
-
-**Development mode:**
+4. **Start development server:**
 ```bash
 npm run dev
 ```
 
-**Production build:**
-```bash
-npm run build
-npm start
-```
+Server runs on `http://localhost:5000`
 
 ## 📡 API Endpoints
 
-### Base URL: `http://localhost:5000/api/auth`
+### Base URLs
+- Auth: `http://localhost:5000/api/auth`
+- QR CRUD: `http://localhost:5000/api/qr`
+- QR Scan: `http://localhost:5000/q/:id`
 
-### 1. **Signup** - Register new user
-```http
-POST /api/auth/signup
-Content-Type: application/json
+### Authentication (Public)
+- `POST /api/auth/signup` — Register user
+- `POST /api/auth/verify-otp` — Verify email
+- `POST /api/auth/login` — Login
+- `POST /api/auth/forgot-password` — Request password reset
+- `POST /api/auth/reset-password` — Reset password
+- `POST /api/auth/resend-otp` — Resend OTP
 
-{
-  "username": "johndoe",
-  "email": "john@example.com",
-  "phoneNumber": "+1234567890",
-  "password": "password123"
-}
+### Authentication (Private)
+- `PUT /api/auth/update-profile` — Update profile
+
+### QR Management (Private)
+- `POST /api/qr` — Create QR
+- `GET /api/qr` — Get all your QRs
+- `GET /api/qr/:id` — Get single QR
+- `PUT /api/qr/:id` — Update QR
+- `DELETE /api/qr/:id` — Delete QR
+
+### QR Scan (Public)
+- `GET /q/:id` — Scan redirect (increments count, redirects to destination)
+
+## 🔐 Authentication
+
+All private endpoints require JWT token in header:
+```
+Authorization: Bearer <your_jwt_token>
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Signup successful. Please check your email for OTP verification.",
-  "data": {
-    "user": {
-      "id": "...",
-      "username": "johndoe",
-      "email": "john@example.com",
-      "phoneNumber": "+1234567890",
-      "isVerified": false
+Get token from:
+- `POST /api/auth/verify-otp` (after signup)
+- `POST /api/auth/login` (existing user)
+
+## 📊 QR Types
+
+| Type | Fields | Redirect To |
+|------|--------|-------------|
+| `website` | `url` | Website URL directly |
+| `whatsapp` | `phone`, `message` | WhatsApp deep link |
+| `image` | `imageName`, `imageUrl`, `imageDescription` | Image URL (S3, CDN, etc.) |
+
+### Example: Create Website QR
+```bash
+curl -X POST http://localhost:5000/api/qr \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Website",
+    "type": "website",
+    "websiteData": {
+      "url": "https://example.com"
     }
-  }
-}
+  }'
 ```
 
-### 2. **Verify OTP** - Complete signup
-```http
-POST /api/auth/verify-otp
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "otp": "123456"
-}
+### Example: Create WhatsApp QR
+```bash
+curl -X POST http://localhost:5000/api/qr \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Contact Support",
+    "type": "whatsapp",
+    "whatsappData": {
+      "phone": "923001234567",
+      "message": "Hello! I scanned your QR code."
+    }
+  }'
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Email verified successfully. You are now logged in.",
-  "data": {
-    "user": {
-      "id": "...",
-      "username": "johndoe",
-      "email": "john@example.com",
-      "phoneNumber": "+1234567890",
-      "isVerified": true
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
+### Example: Create Image QR
+```bash
+curl -X POST http://localhost:5000/api/qr \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Product Photo",
+    "type": "image",
+    "imageData": {
+      "imageName": "Summer Collection",
+      "imageUrl": "https://s3.amazonaws.com/bucket/image.jpg",
+      "imageDescription": "Our latest collection"
+    }
+  }'
 ```
 
-### 3. **Login** - User login
-```http
-POST /api/auth/login
-Content-Type: application/json
+## 🧪 Testing
 
-{
-  "email": "john@example.com",
-  "password": "password123"
-}
+### Using Postman/Thunder Client
+1. Import endpoints from `API_DOCUMENTATION.md`
+2. Set environment variable: `baseUrl=http://localhost:5000`
+3. Test signup → verify OTP → login flow
+
+### Using cURL
+See examples above or check `test-api.http` for more
+
+### Database Management
+```bash
+# Clear all data
+npm run db:clear
+
+# Drop entire database
+npm run db:drop
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "user": {
-      "id": "...",
-      "username": "johndoe",
-      "email": "john@example.com",
-      "phoneNumber": "+1234567890",
-      "isVerified": true
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
+## 📧 Email Setup (Gmail)
+
+1. Enable 2-Factor Authentication on Gmail
+2. Generate App Password:
+   - Go to Google Account → Security → App passwords
+   - Select "Mail" and "Windows Computer"
+   - Copy the generated password
+3. Set `SMTP_PASS` in `.env` to this password
+
+**Note:** In development, if email fails, OTP is logged to console.
+
+## 🚀 Deployment
+
+### Environment Variables for Production
+```env
+MONGODB_URI=<production-mongodb-uri>
+JWT_SECRET=<strong-random-secret>
+JWT_EXPIRES_IN=7d
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=<your-email>
+SMTP_PASS=<app-password>
+OTP_EXPIRES_IN=10
+NODE_ENV=production
 ```
 
-### 4. **Forgot Password** - Request password reset
-```http
-POST /api/auth/forgot-password
-Content-Type: application/json
+**Don't set PORT** — deployment platform sets it automatically.
 
-{
-  "email": "john@example.com"
-}
-```
+### Platforms
+- Render
+- Railway
+- Vercel
+- Heroku
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "OTP sent to your email. Please verify to reset your password."
-}
-```
+### MongoDB Atlas Setup
+1. Whitelist deployment IP in Network Access
+2. Or allow all IPs: `0.0.0.0/0` (for development)
 
-### 5. **Reset Password** - Complete password reset
-```http
-POST /api/auth/reset-password
-Content-Type: application/json
+## 📚 Documentation
 
-{
-  "email": "john@example.com",
-  "otp": "123456",
-  "newPassword": "newpassword123"
-}
-```
+- **API_DOCUMENTATION.md** — Complete API reference with examples
+- **MONGODB_SETUP.md** — MongoDB troubleshooting guide
+- **TESTING_GUIDE.md** — Step-by-step testing instructions
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Password reset successful. You can now login with your new password."
-}
-```
-
-### 6. **Resend OTP** - Request new OTP
-```http
-POST /api/auth/resend-otp
-Content-Type: application/json
-
-{
-  "email": "john@example.com"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "OTP resent successfully. Please check your email."
-}
-```
-
-## 🔐 Authentication Flow
-
-### Signup Flow:
-1. User submits signup form → `POST /api/auth/signup`
-2. System creates user and sends OTP to email
-3. User enters OTP → `POST /api/auth/verify-otp`
-4. System verifies OTP and logs user in (returns JWT token)
-
-### Login Flow:
-1. User enters email and password → `POST /api/auth/login`
-2. System validates credentials
-3. Returns JWT token if successful
-
-### Forgot Password Flow:
-1. User enters email → `POST /api/auth/forgot-password`
-2. System sends OTP to email
-3. User enters OTP and new password → `POST /api/auth/reset-password`
-4. System verifies OTP and updates password
-
-## 🛡️ Protected Routes (Future Use)
-
-To protect routes, use the authentication middleware:
-
-```typescript
-import { authenticate } from './middlewares/auth.middleware';
-
-router.get('/protected', authenticate, controller.method);
-```
-
-Send JWT token in headers:
-```http
-Authorization: Bearer <your-jwt-token>
-```
-
-## 🧪 Testing with Postman/Thunder Client
-
-1. Import the endpoints above
-2. Start with signup
-3. Check your email for OTP
-4. Verify OTP to get token
-5. Use token for protected routes
-
-## 🔧 Tech Stack
+## 🛠️ Tech Stack
 
 - **Runtime:** Node.js
 - **Framework:** Express.js
 - **Database:** MongoDB (Atlas)
-- **Authentication:** JWT
-- **Password Hashing:** bcrypt
+- **Authentication:** JWT + bcrypt
 - **Email:** Nodemailer
 - **Validation:** express-validator
 - **Language:** TypeScript
@@ -302,13 +266,62 @@ Authorization: Bearer <your-jwt-token>
   username: string;
   email: string;
   phoneNumber: string;
-  password: string;
+  password: string;        // hashed
   isVerified: boolean;
-  otp?: string;
-  otpExpires?: Date;
+  otp?: string;            // temporary
+  otpExpires?: Date;       // temporary
   createdAt: Date;
   updatedAt: Date;
 }
+```
+
+## 📱 QR Model
+
+```typescript
+{
+  name: string;
+  scans: number;
+  type: 'whatsapp' | 'website' | 'image';
+  whatsappData?: { phone: string; message: string };
+  websiteData?: { url: string };
+  imageData?: { imageName: string; imageUrl: string; imageDescription: string };
+  userId: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+## 🔄 Authentication Flow
+
+### Signup
+```
+User → POST /signup → OTP sent to email → User enters OTP → POST /verify-otp → Logged in
+```
+
+### Login
+```
+User → POST /login → Credentials validated → JWT token returned → Logged in
+```
+
+### Forgot Password
+```
+User → POST /forgot-password → OTP sent → POST /reset-password → Password updated
+```
+
+## 🔄 QR Scan Flow
+
+```
+User scans QR code
+    ↓
+GET /q/<qr_id>
+    ↓
+Backend increments scan count
+    ↓
+Backend redirects (302) to destination
+    ↓
+├── Website QR → Opens website
+├── WhatsApp QR → Opens WhatsApp chat
+└── Image QR → Opens image
 ```
 
 ## 🚨 Error Handling
@@ -317,18 +330,58 @@ All errors return consistent format:
 ```json
 {
   "success": false,
-  "message": "Error message here"
+  "message": "Error description"
 }
 ```
 
-## 📌 Next Steps
+HTTP status codes:
+- `200` — OK
+- `201` — Created
+- `302` — Redirect (scan endpoint)
+- `400` — Bad Request / Validation error
+- `401` — Unauthorized
+- `403` — Forbidden
+- `404` — Not Found
+- `500` — Server Error
 
-After authentication is working, you can add:
-- QR code generation endpoints
-- QR code scanning endpoints
-- User profile management
-- QR code data storage and retrieval
+## 📋 Scripts
+
+```bash
+npm run dev              # Start development server
+npm run build            # Build TypeScript
+npm start                # Run production build
+npm run db:clear         # Clear database
+npm run db:drop          # Drop database
+```
+
+## 🔒 Security Notes
+
+- Passwords hashed with bcrypt (10 salt rounds)
+- OTPs expire after 10 minutes
+- JWT tokens expire after 7 days
+- All sensitive fields excluded from API responses
+- Input validation on all endpoints
+- Users can only access their own data
+- Scan endpoint is intentionally public
+
+## 📞 Support
+
+For issues or questions:
+1. Check `API_DOCUMENTATION.md` for endpoint details
+2. Check `MONGODB_SETUP.md` for database issues
+3. Check `TESTING_GUIDE.md` for testing help
 
 ## 📄 License
 
 ISC
+
+## 🎯 Next Steps
+
+After authentication and QR management are working:
+- Add QR code image generation
+- Add analytics dashboard
+- Add user profile page
+- Add QR code templates
+- Add bulk QR creation
+- Add QR code expiration
+- Add custom QR branding
