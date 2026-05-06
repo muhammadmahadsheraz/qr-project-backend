@@ -47,7 +47,7 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// Hash password before saving (bcrypt)
+// Hash password before saving with bcrypt
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   

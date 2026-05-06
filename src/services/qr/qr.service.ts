@@ -89,7 +89,7 @@ export class QRService {
 
     if (effectiveType === 'whatsapp') {
       if (updates.whatsappData) updatePayload.whatsappData = updates.whatsappData;
-      // Clear other type data when switching types
+      // Cleanup unrelated fields when type changes
       if (updates.type === 'whatsapp') {
         updatePayload.websiteData = undefined;
         updatePayload.imageData = undefined;
@@ -158,7 +158,7 @@ export class QRService {
   }
 
   async resolveRedirectUrl(qrId: string): Promise<{ success: boolean; redirectUrl?: string; message?: string }> {
-    // Atomic operation: increment scan count and fetch updated QR in one DB call
+    // Atomic increment: scan count and fetch updated QR in single DB operation
     const qr = await QR.findByIdAndUpdate(
       qrId,
       { $inc: { scans: 1 } },

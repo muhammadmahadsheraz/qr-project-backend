@@ -263,7 +263,7 @@ export class AuthService {
     updates: { username?: string; email?: string; phoneNumber?: string }
   ): Promise<IAuthResponse> {
     if (updates.email) {
-      // Prevent email conflicts across users
+      // Validate email uniqueness across user accounts
       const emailTaken = await User.findOne({
         email: updates.email,
         _id: { $ne: userId },
